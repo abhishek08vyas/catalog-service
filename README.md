@@ -26,9 +26,11 @@ A RESTful API service for managing products and categories built with Fastify, T
 
 ```
 catalog-service/
+├── api/
+│   └── index.ts                # Vercel Route File
 ├── src/
 │   ├── config/
-│   │   └── data-source.ts      # Database configuration
+│   │   └── database.ts      # Database configuration
 │   ├── models/
 │   │   ├── Category.ts         # Category entity
 │   │   ├── Product.ts          # Product entity
@@ -41,6 +43,7 @@ catalog-service/
 │   │   ├── categoryRoutes.ts
 │   │   └── productRoutes.ts
 │   └── index.ts                # Main application file
+│   └── app.ts                  # Init Server
 ├── .env.example
 ├── .gitignore
 ├── package.json
@@ -61,7 +64,7 @@ catalog-service/
 1. Clone the repository:
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/abhishek08vyas/catalog-service.git
 cd catalog-service
 ```
 
@@ -80,13 +83,14 @@ cp .env.example .env
 4. Update `.env` with your database credentials:
 
 ```env
+NODE_ENV=development
 PORT=3000
-DATABASE_URL=postgresql://user:password@localhost:5432/catalog_db
+DATABASE_URL=postgresql://user:password@localhost:5432/commerce_platform
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=user
 DB_PASS=password
-DB_NAME=catalog_db
+DB_NAME=commerce_platform
 ```
 
 5. Run the development server:
@@ -99,11 +103,11 @@ npm run dev
 
 ### Categories
 
--   `GET /api/categories` - Get all categories
--   `GET /api/categories/:id` - Get category by ID
--   `POST /api/categories` - Create new category
--   `PUT /api/categories/:id` - Update category
--   `DELETE /api/categories/:id` - Delete category
+-   `GET /api/v1/categories` - Get all categories
+-   `GET /api/v1/categories/:id` - Get category by ID
+-   `POST /api/v1/categories` - Create new category
+-   `PUT /api/v1/categories/:id` - Update category
+-   `DELETE /api/v1/categories/:id` - Delete category
 
 **Category Schema:**
 
@@ -121,11 +125,11 @@ npm run dev
 
 ### Products
 
--   `GET /api/products` - Get all products
--   `GET /api/products/:id` - Get product by ID
--   `POST /api/products` - Create new product
--   `PUT /api/products/:id` - Update product
--   `DELETE /api/products/:id` - Delete product
+-   `GET /api/v1/products` - Get all products
+-   `GET /api/v1/products/:id` - Get product by ID
+-   `POST /api/v1/products` - Create new product
+-   `PUT /api/v1/products/:id` - Update product
+-   `DELETE /api/v1/products/:id` - Delete product
 
 **Product Schema:**
 

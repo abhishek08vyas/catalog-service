@@ -9,7 +9,7 @@ export class ProductAttribute {
 	@Column({ type: "int", name: "product_id" })
 	productId!: number;
 
-	@ManyToOne(() => Product, (product: { attributes: ProductAttribute[] }) => product.attributes)
+	@ManyToOne(() => Product, (product) => product.attributes)
 	@JoinColumn({ name: "product_id" })
 	product!: Product;
 

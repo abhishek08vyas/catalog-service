@@ -1,44 +1,54 @@
 import "reflect-metadata";
-import Fastify from "fastify";
-import cors from "@fastify/cors";
 import { config } from "dotenv";
 import { AppDataSource } from "./config/database";
-import { categoryRoutes } from "./routes/CategoryRoutes";
-import { productRoutes } from "./routes/ProductRoutes";
+import { createFastifyApp } from "./app";
 
 config();
-
-const fastify = Fastify({
-	logger: true,
-});
 
 async function start() {
 	try {
 		// Initialize database
-		await AppDataSource.initialize();
-		console.log("Database connected successfully");
+		if (!AppDataSource.isInitialized) {
+			await AppDataSource.initialize();
+			console.log("Database connected successfully");
+		}
 
-		// Register CORS
-		await fastify.register(cors, {
-			origin: true,
-		});
+		// Create Fastify app
+		const fastify = await createFastifyApp();
 
-		// Health check
-		fastify.get("/health-check/liveness", async () => {
-			return { status: "ok", service: "catalog-service" };
-		});
+		// Start server
+		const port = parseInt(process.env.PORT || "3000", 10);
+		const host = process.env.HOST || "0.0.0.0";
 
-		// Register routes
-		await fastify.register(categoryRoutes, { prefix: "/api" });
-		await fastify.register(productRoutes, { prefix: "/api" });
+		await fastify.listen({ port, host });
+		console.log(`Server running on http://${host}:${port}`);
 
-		const port = parseInt(process.env.PORT || "3000");
-		await fastify.listen({ port, host: "0.0.0.0" });
-		console.log(`Server running on port ${port}`);
+		// Graceful shutdown
+		const shutdown = async (signal: string) => {
+			console.log(`Received ${signal}, shutting down gracefully...`);
+			try {
+				await fastify.close();
+				if (AppDataSource.isInitialized) {
+					await AppDataSource.destroy();
+					console.log("Database connection closed");
+				}
+				console.log("Server shut down successfully");
+				process.exit(0);
+			} catch (error) {
+				console.error("Error during shutdown:", error);
+				process.exit(1);
+			}
+		};
+
+		process.on("SIGTERM", () => shutdown("SIGTERM"));
+		process.on("SIGINT", () => shutdown("SIGINT"));
 	} catch (error) {
 		console.error("Error starting server:", error);
 		process.exit(1);
 	}
 }
 
-start();
+// Only start server if not in serverless environment
+if (require.main === module) {
+	start();
+}

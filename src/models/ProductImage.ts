@@ -9,7 +9,7 @@ export class ProductImage {
 	@Column({ type: "int", name: "product_id" })
 	productId!: number;
 
-	@ManyToOne(() => Product, (product: { images: ProductImage[] }) => product.images)
+	@ManyToOne(() => Product, (product) => product.images)
 	@JoinColumn({ name: "product_id" })
 	product!: Product;
 

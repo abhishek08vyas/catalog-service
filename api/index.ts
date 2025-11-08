@@ -46,13 +46,49 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 	try {
 		const fastifyApp = await getApp();
 
+		// Prepare headers - normalize and remove Content-Length to let Fastify calculate it correctly
+		// This prevents "Request body size did not match Content-Length" errors
+		const headers: Record<string, string> = {};
+		for (const [key, value] of Object.entries(req.headers)) {
+			if (value !== undefined) {
+				// Skip Content-Length header - let Fastify calculate it from the actual payload
+				// This is crucial because Vercel may have already parsed the body,
+				// causing a size mismatch when we stringify it again
+				if (key.toLowerCase() === "content-length") {
+					continue;
+				}
+				// Handle array values (some headers can be arrays)
+				headers[key] = Array.isArray(value) ? value.join(", ") : String(value);
+			}
+		}
+
+		// Prepare payload
+		let payload: string | Buffer | undefined;
+		if (req.body) {
+			if (typeof req.body === "string") {
+				payload = req.body;
+			} else if (Buffer.isBuffer(req.body)) {
+				payload = req.body;
+			} else {
+				// Vercel has already parsed JSON, so stringify it
+				payload = JSON.stringify(req.body);
+				// Set Content-Type to application/json if not already set
+				const hasContentType = Object.keys(headers).some(
+					(key) => key.toLowerCase() === "content-type"
+				);
+				if (!hasContentType) {
+					headers["content-type"] = "application/json";
+				}
+			}
+		}
+
 		// Use Fastify's inject method - perfect for serverless environments
 		// This bypasses the HTTP server layer and directly processes requests
 		const response = await fastifyApp.inject({
 			method: req.method || "GET",
 			url: req.url || "/",
-			headers: req.headers as Record<string, string>,
-			payload: req.body ? (typeof req.body === "string" ? req.body : JSON.stringify(req.body)) : undefined,
+			headers,
+			payload,
 			query: req.query as Record<string, string>,
 		});
 
